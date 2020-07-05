@@ -102,8 +102,8 @@ const find = (obj, tags) => {
     tags.includes(k)
       ? (val = obj[k])
       : obj[k] && typeof obj[k] === "object"
-      ? (val = find(obj[k], tags))
-      : val
+        ? (val = find(obj[k], tags))
+        : val
   )
   return typeof val === "object" ? find(val, ["$text"]) : val
 }
@@ -127,23 +127,23 @@ const extract = item => {
   if (++count === args.max) end()
 }
 
-;(async () => {
-  process.on("SIGINT", end)
+  ; (async () => {
+    process.on("SIGINT", end)
 
-  Array.from(["help", "version"]).forEach(cmd => args[cmd] === true && helper(cmd))
+    Array.from(["help", "version"]).forEach(cmd => args[cmd] === true && helper(cmd))
 
-  const {
-    resources: [{ url, format }]
-  } = await opendata("resources/{url,format}")
+    const {
+      resources: [{ url, format }]
+    } = await opendata("resources/{url,format}")
 
-  basedir = mkdir(path.basename(url, `.${format}`))
+    basedir = mkdir(path.basename(url, `.${format}`))
 
-  const tarStream = tar.t({ filter: path => /\.xml$/.test(path) })
-  tarStream.on("entry", entry =>
-    flow(entry)
-      .on("tag:lod:item", extract)
-      .on("end", end)
-  )
+    const tarStream = tar.t({ filter: path => /\.xml$/.test(path) })
+    tarStream.on("entry", entry =>
+      flow(entry)
+        .on("tag:lod:item", extract)
+        .on("end", end)
+    )
 
-  get(url, resp => resp.pipe(tarStream))
-})()
+    get(url, resp => resp.pipe(tarStream))
+  })()
