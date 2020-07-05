@@ -57,7 +57,7 @@ const progress = progress => {
 }
 
 const end = () => {
-  writeFile(path.join(basedir, `${basedir}.json`), JSON.stringify(items, null, 2))
+  if (args.single) writeFile(path.join(basedir, `${basedir}.json`), JSON.stringify(items, null, 2))
 
   const hrend = process.hrtime(hrstart)
   const time = new Date(hrend[0] * 1000).toISOString().substr(11, 8)
