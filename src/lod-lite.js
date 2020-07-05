@@ -40,7 +40,7 @@ const helper = cmd => {
     output = `lod-lite <options>\n
     \rsingle ........ Extract all data to a single json file
     \rpartial ....... Include in extract data items without all traductions
-    \rslit .......... Extract data in separate files
+    \rsplit ......... Extract data in separate files
     \rmax=[] ........ Number of items to be extracted. e.g. max=1000
     \rhelp .......... Ouput usage information
     \rversion ....... Ouput Lod-lite version`
