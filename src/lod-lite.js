@@ -12,17 +12,16 @@ const lod = require("./schema")
 const pack = require("../package.json")
 
 const hrstart = process.hrtime()
-const infos = { total: 0, fail: [], partial: 0 }
+const infos = { total: 0, fail: [], partial: 0, audio: 0 }
 const items = {}
 let count = 0
 let basedir
 
 const args = (() => {
   const defaults = {
-    single: true,
     partial: false,
-    split: false,
     max: false,
+    split: true,
     help: false,
     version: false
   }
@@ -38,12 +37,11 @@ const helper = cmd => {
   let output
   if (cmd === "help")
     output = `lod-lite <options>\n
-    \rsingle ........ Extract all data to a single json file
-    \rpartial ....... Include in extract data items without all traductions
-    \rsplit ......... Extract data in separate files
-    \rmax=[] ........ Number of items to be extracted. e.g. max=1000
-    \rhelp .......... Ouput usage information
-    \rversion ....... Ouput Lod-lite version`
+    \rpartial ....... Include in extract data items without all traductions (default: false)
+    \rmax=[] ........ Number of items to be extracted. e.g. max=1000 (default: all)
+    \rsplit ......... Convert audio from base64 to mp3 and save in the file (default: true)
+    \rhelp .......... Output usage information
+    \rversion ....... Output Lod-lite version`
   else if (cmd === "version") output = `${pack.name} : ${pack.version}`
 
   process.stdout.write(`\n${output}\n\n`)
@@ -57,7 +55,7 @@ const progress = progress => {
 }
 
 const end = () => {
-  if (args.single) writeFile(path.join(basedir, `${basedir}.json`), JSON.stringify(items, null, 2))
+  writeJSON(path.join(basedir, `${basedir}.json`), JSON.stringify(items, null, 2), false)
 
   const hrend = process.hrtime(hrstart)
   const time = new Date(hrend[0] * 1000).toISOString().substr(11, 8)
@@ -66,33 +64,46 @@ const end = () => {
   process.stdout.clearLine()
 
   console.info("⦿ Execution time: ", time)
-  console.info("√ Files created: ", infos.total)
-  console.info("? Items without all keys: ", infos.partial)
+  console.info("√ Items extracted : ", infos.total)
 
-  if (infos.fail.length > 0)
-    console.info("☓ Unable to save files:: ", infos.fail.length, infos.fail)
+  if (args.split) console.info("☊ Audio extracted: ", infos.audio)
+  if (args.partial) console.info("? Items without all keys: ", infos.partial)
+  if (infos.fail.length > 0) console.info("☓ Unable to save items: ", infos.fail.length, infos.fail)
 
   process.stdout.write("\n")
 
   process.exit()
 }
 
-const mkdir = basedir => {
+const mkdir = dir => {
   try {
-    if (!fs.existsSync(basedir)) fs.mkdirSync(basedir)
-    return basedir
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir)
+    return dir
   } catch (err) {
     console.error(err.message, "\n")
     process.exit()
   }
 }
 
-const writeFile = (filename, item) => {
+const writeJSON = (filename, item, count = true) => {
   try {
     fs.writeFileSync(filename, item)
-    infos.total++
+    if (count) infos.total++
   } catch (err) {
     infos.fail.push(path.basename(filename, ".json"))
+  }
+}
+
+const writeAudio = (id, data) => {
+  const filename = `${id}.mp3`
+  const audioPath = path.join(basedir, 'audio', filename)
+  const buff = new Buffer.from(data, "base64")
+  if (buff.length < 1000) infos.smallFiles.push(id)
+  try {
+    fs.writeFileSync(audioPath, buff)
+    infos.audio++
+  } catch (err) {
+    infos.fail.push(filename)
   }
 }
 
@@ -110,7 +121,7 @@ const find = (obj, tags) => {
 
 const extract = item => {
   const id = item["lod:meta"]["lod:id"]
-  const filename = path.join(basedir, `${id}.json`)
+  const filename = path.join(basedir, id)
   const obj = Object.keys(lod).reduce((obj, key) => ((obj[key] = find(item, lod[key])), obj), {})
 
   const hasAllKeys = Object.values(obj).filter(Boolean).length === Object.keys(lod).length
@@ -118,7 +129,9 @@ const extract = item => {
   if (!args.partial && !hasAllKeys) return
   else if (!hasAllKeys) infos.partial++
 
-  if (args.split) writeFile(filename, JSON.stringify(obj, null, 2))
+  if (args.split && "audio" in obj) writeAudio(id, obj.audio) & delete obj.audio
+
+  writeJSON(filename + ".json", JSON.stringify(obj, null, 2))
 
   items[id] = obj
 
@@ -137,6 +150,8 @@ const extract = item => {
     } = await opendata("resources/{url,format}")
 
     basedir = mkdir(path.basename(url, `.${format}`))
+
+    if(args.split) mkdir(path.join(basedir, 'audio'))
 
     const tarStream = tar.t({ filter: path => /\.xml$/.test(path) })
     tarStream.on("entry", entry =>

@@ -10,8 +10,8 @@ module.exports = {
     "lod:renvoi-pron",
     "lod:renvoi-subst",
     "lod:renvoi-vrb"
-  ],
-  id: ["lod:id"],*/
+  ],*/
+  id: ["lod:id"],
   lu: ["lod:item-adresse"],
   de: [
     "lod:trad-all-domin",
@@ -40,7 +40,6 @@ module.exports = {
     "lod:trad-en-subord",
     "lod:ete-explicite",
     "lod:rs-ete-presente"
-  ]
-  /*,
-  audio: ["lod:audio"]*/
+  ],
+  audio: ["lod:audio"]
 }
