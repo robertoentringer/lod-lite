@@ -10,12 +10,13 @@ const tar = require("tar")
 const fs = require("fs")
 const lod = require("./schema")
 const pack = require("../package.json")
+const util = require('util')
 
 const hrstart = process.hrtime()
-const infos = { total: 0, fail: [], partial: 0, audio: 0 }
+const infos = { fail: [], small: [], partial: 0, audio: 0 }
 const items = {}
 let count = 0
-let basedir
+let outputFolder
 
 const args = (() => {
   const defaults = {
@@ -27,14 +28,17 @@ const args = (() => {
   }
   process.argv.slice(2).forEach(i => {
     let [k, v] = i.split("=")
+
     if (k in defaults)
       defaults[k] = !isNaN(v) || k == "max" ? Math.abs(v) || false : v === undefined || v === "true"
   })
+
   return defaults
 })()
 
 const helper = cmd => {
   let output
+
   if (cmd === "help")
     output = `lod-lite <options>\n
     \rpartial ....... Include in extract data items without all traductions (default: false)
@@ -45,6 +49,7 @@ const helper = cmd => {
   else if (cmd === "version") output = `${pack.name} : ${pack.version}`
 
   process.stdout.write(`\n${output}\n\n`)
+
   process.exit()
 }
 
@@ -55,7 +60,7 @@ const progress = progress => {
 }
 
 const end = () => {
-  writeJSON(path.join(basedir, `${basedir}.json`), JSON.stringify(items, null, 2), false)
+  writeItems(path.join(outputFolder, `${outputFolder}.json`), JSON.stringify(items, null, 2), false)
 
   const hrend = process.hrtime(hrstart)
   const time = new Date(hrend[0] * 1000).toISOString().substr(11, 8)
@@ -64,11 +69,12 @@ const end = () => {
   process.stdout.clearLine()
 
   console.info("⦿ Execution time: ", time)
-  console.info("√ Items extracted : ", infos.total)
+  console.info("√ Items extracted : ", Object.keys(items).length)
 
+  if (infos.small.length) console.info("⚠︎ Mp3 very small: ", infos.small.length, infos.small)
   if (args.split) console.info("☊ Audio extracted: ", infos.audio)
   if (args.partial) console.info("? Items without all keys: ", infos.partial)
-  if (infos.fail.length > 0) console.info("☓ Unable to save items: ", infos.fail.length, infos.fail)
+  if (infos.fail.length > 0) console.info("✕ Unable to save items: ", infos.fail.length, infos.fail)
 
   process.stdout.write("\n")
 
@@ -77,7 +83,7 @@ const end = () => {
 
 const mkdir = dir => {
   try {
-    if (!fs.existsSync(dir)) fs.mkdirSync(dir)
+    if(!fs.existsSync(dir)) fs.mkdirSync(dir, {recursive: true})
     return dir
   } catch (err) {
     console.error(err.message, "\n")
@@ -85,30 +91,21 @@ const mkdir = dir => {
   }
 }
 
-const writeJSON = (filename, item, count = true) => {
-  try {
-    fs.writeFileSync(filename, item)
-    if (count) infos.total++
-  } catch (err) {
-    infos.fail.push(path.basename(filename, ".json"))
-  }
-}
+const getFolder = dir => mkdir(path.join(outputFolder, dir))
 
-const writeAudio = (id, data) => {
-  const filename = `${id}.mp3`
-  const audioPath = path.join(basedir, 'audio', filename)
-  const buff = new Buffer.from(data, "base64")
-  if (buff.length < 1000) infos.smallFiles.push(id)
+const writeItems = (filename, data, id) => {
   try {
-    fs.writeFileSync(audioPath, buff)
-    infos.audio++
+    fs.writeFileSync(filename, data)
+    return true
   } catch (err) {
-    infos.fail.push(filename)
+    infos.fail.push(id)
+    return false
   }
 }
 
 const find = (obj, tags) => {
   let val
+
   Object.keys(obj).some(k =>
     tags.includes(k)
       ? (val = obj[k])
@@ -116,49 +113,60 @@ const find = (obj, tags) => {
         ? (val = find(obj[k], tags))
         : val
   )
+
   return typeof val === "object" ? find(val, ["$text"]) : val
 }
 
 const extract = item => {
   const id = item["lod:meta"]["lod:id"]
-  const filename = path.join(basedir, id)
   const obj = Object.keys(lod).reduce((obj, key) => ((obj[key] = find(item, lod[key])), obj), {})
-
   const hasAllKeys = Object.values(obj).filter(Boolean).length === Object.keys(lod).length
 
   if (!args.partial && !hasAllKeys) return
   else if (!hasAllKeys) infos.partial++
 
-  if (args.split && "audio" in obj) writeAudio(id, obj.audio) & delete obj.audio
+  if (args.split && "audio" in obj) {
+    const buff = new Buffer.from(obj.audio, "base64")
 
-  writeJSON(filename + ".json", JSON.stringify(obj, null, 2))
+    if (buff.length < 1000) infos.small.push(id)
 
-  items[id] = obj
+    writeItems(path.join(getFolder('audio'), `${id}.mp3`), buff, id)
+      && delete obj.audio && infos.audio++
+  }
+
+  const dataJson = JSON.stringify(obj, null, 2)
+  const dataJs = 'export default ' + util.inspect(obj, { breakLength: "Infinity" })
+
+  const saveJson = writeItems(path.join(getFolder('json'), `${id}.json`), dataJson, id)
+  const saveJs = writeItems(path.join(getFolder('js'), `${id}.js`), dataJs, id)
+
+  if (saveJson && saveJs) items[id] = obj
 
   progress(id)
 
   if (++count === args.max) end()
 }
 
-  ; (async () => {
-    process.on("SIGINT", end)
+const init = async () => {
+  process.on("SIGINT", end)
 
-    Array.from(["help", "version"]).forEach(cmd => args[cmd] === true && helper(cmd))
+  Array.from(["help", "version"]).forEach(cmd => args[cmd] === true && helper(cmd))
 
-    const {
-      resources: [{ url, format }]
-    } = await opendata("resources/{url,format}")
+  const {
+    resources: [{ url, format }]
+  } = await opendata("resources/{url,format}")
 
-    basedir = mkdir(path.basename(url, `.${format}`))
+  outputFolder = path.basename(url, `.${format}`)
 
-    if(args.split) mkdir(path.join(basedir, 'audio'))
+  const tarStream = tar.t({ filter: path => /\.xml$/.test(path) })
 
-    const tarStream = tar.t({ filter: path => /\.xml$/.test(path) })
-    tarStream.on("entry", entry =>
-      flow(entry)
-        .on("tag:lod:item", extract)
-        .on("end", end)
-    )
+  tarStream.on("entry", entry =>
+    flow(entry)
+      .on("tag:lod:item", extract)
+      .on("end", end)
+  )
 
-    get(url, resp => resp.pipe(tarStream))
-  })()
+  get(url, resp => resp.pipe(tarStream))
+}
+
+init()
