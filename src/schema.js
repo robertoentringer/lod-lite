@@ -1,5 +1,5 @@
 module.exports = {
-  /*target: [
+  target: [
     "lod:renvoi-adj",
     "lod:renvoi-adv",
     "lod:renvoi-art",
@@ -10,7 +10,7 @@ module.exports = {
     "lod:renvoi-pron",
     "lod:renvoi-subst",
     "lod:renvoi-vrb"
-  ],*/
+  ],
   id: ["lod:id"],
   lu: ["lod:item-adresse"],
   de: [
