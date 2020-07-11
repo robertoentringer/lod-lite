@@ -30,13 +30,14 @@ $ npx lod-lite
 ```
 
 ## XML Schema
+
 Schema: https://www.lod.lu/schema/lod-opendata.xsd
 
 ## Data source
 
 Data from the "Lëtzebuerger Online Dictionnaire" (LOD)
 Website: http://www.lod.lu
-Source: https://data.public.lu/fr/datasets/letzebuerger-online-dictionnaire-raw-data/
+Source: https://data.public.lu/fr/datasets/letzebuerger-online-dictionnaire/
 Licence: Creative Commons Zero (CC0)
 
-[![screenshot.png](screenshot.png)](https://data.public.lu/fr/datasets/letzebuerger-online-dictionnaire-raw-data/)
+[![screenshot.png](screenshot.png)](https://data.public.lu/fr/datasets/letzebuerger-online-dictionnaire/)
