@@ -8,15 +8,15 @@ const { get } = require("https")
 const path = require("path")
 const tar = require("tar")
 const fs = require("fs")
-const lod = require("./schema")
+const schema = require("./schema")
 const pack = require("../package.json")
-const util = require('util')
+const util = require("util")
 
+const outputFolder = fs.mkdtempSync("lod-lite-output-")
 const hrstart = process.hrtime()
 const infos = { fail: [], small: [], partial: 0, audio: 0 }
 const items = {}
 let count = 0
-let outputFolder
 
 const args = (() => {
   const defaults = {
@@ -24,9 +24,9 @@ const args = (() => {
     max: false,
     split: true,
     help: false,
-    version: false
+    version: false,
   }
-  process.argv.slice(2).forEach(i => {
+  process.argv.slice(2).forEach((i) => {
     let [k, v] = i.split("=")
 
     if (k in defaults)
@@ -36,7 +36,7 @@ const args = (() => {
   return defaults
 })()
 
-const helper = cmd => {
+const helper = (cmd) => {
   let output
 
   if (cmd === "help")
@@ -53,7 +53,7 @@ const helper = cmd => {
   process.exit()
 }
 
-const progress = progress => {
+const progress = (progress) => {
   process.stdout.clearLine()
   process.stdout.cursorTo(0)
   process.stdout.write(progress)
@@ -81,9 +81,9 @@ const end = () => {
   process.exit()
 }
 
-const mkdir = dir => {
+const mkdir = (dir) => {
   try {
-    if(!fs.existsSync(dir)) fs.mkdirSync(dir, {recursive: true})
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true })
     return dir
   } catch (err) {
     console.error(err.message, "\n")
@@ -91,7 +91,7 @@ const mkdir = dir => {
   }
 }
 
-const getFolder = dir => mkdir(path.join(outputFolder, dir))
+const getFolder = (dir) => mkdir(path.join(outputFolder, dir))
 
 const writeItems = (filename, data, id) => {
   try {
@@ -106,21 +106,24 @@ const writeItems = (filename, data, id) => {
 const find = (obj, tags) => {
   let val
 
-  Object.keys(obj).some(k =>
+  Object.keys(obj).some((k) =>
     tags.includes(k)
       ? (val = obj[k])
       : obj[k] && typeof obj[k] === "object"
-        ? (val = find(obj[k], tags))
-        : val
+      ? (val = find(obj[k], tags))
+      : val
   )
 
   return typeof val === "object" ? find(val, ["$text"]) : val
 }
 
-const extract = item => {
+const extract = (item) => {
   const id = item["lod:meta"]["lod:id"]
-  const obj = Object.keys(lod).reduce((obj, key) => ((obj[key] = find(item, lod[key])), obj), {})
-  const hasAllKeys = Object.values(obj).filter(Boolean).length === Object.keys(lod).length
+  const obj = Object.keys(schema).reduce(
+    (obj, key) => ((obj[key] = find(item, schema[key])), obj),
+    {}
+  )
+  const hasAllKeys = Object.values(obj).filter(Boolean).length === Object.keys(schema).length
 
   if (!args.partial && !hasAllKeys) return
   else if (!hasAllKeys) infos.partial++
@@ -130,15 +133,16 @@ const extract = item => {
 
     if (buff.length < 1000) infos.small.push(id)
 
-    writeItems(path.join(getFolder('audio'), `${id}.mp3`), buff, id)
-      && delete obj.audio && infos.audio++
+    writeItems(path.join(getFolder("audio"), `${id}.mp3`), buff, id) &&
+      delete obj.audio &&
+      infos.audio++
   }
 
   const dataJson = JSON.stringify(obj, null, 2)
-  const dataJs = 'export default ' + util.inspect(obj, { breakLength: "Infinity" })
+  const dataJs = "export default " + util.inspect(obj, { breakLength: "Infinity" })
 
-  const saveJson = writeItems(path.join(getFolder('json'), `${id}.json`), dataJson, id)
-  const saveJs = writeItems(path.join(getFolder('js'), `${id}.js`), dataJs, id)
+  const saveJson = writeItems(path.join(getFolder("json"), `${id}.json`), dataJson, id)
+  const saveJs = writeItems(path.join(getFolder("js"), `${id}.js`), dataJs, id)
 
   if (saveJson && saveJs) items[id] = obj
 
@@ -150,23 +154,20 @@ const extract = item => {
 const init = async () => {
   process.on("SIGINT", end)
 
-  Array.from(["help", "version"]).forEach(cmd => args[cmd] === true && helper(cmd))
+  Array.from(["help", "version"]).forEach((cmd) => args[cmd] === true && helper(cmd))
 
   const {
-    resources: [{ url, format }]
-  } = await opendata("resources/{url,format}")
+    resources: [{ url }],
+  } = await opendata("resources/{url}")
 
-  outputFolder = path.basename(url, `.${format}`)
+  const tarStream = tar.t({ filter: (path) => /\.xml$/.test(path) })
 
-  const tarStream = tar.t({ filter: path => /\.xml$/.test(path) })
+  tarStream.on("entry", (entry) => flow(entry).on("tag:lod:item", extract).on("end", end))
 
-  tarStream.on("entry", entry =>
-    flow(entry)
-      .on("tag:lod:item", extract)
-      .on("end", end)
-  )
+  get(url, (resp) => resp.pipe(tarStream))
 
-  get(url, resp => resp.pipe(tarStream))
+  console.info(`Parsing from : ${url}`, "\n")
+
 }
 
 init()

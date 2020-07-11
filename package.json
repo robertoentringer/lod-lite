@@ -11,7 +11,7 @@
   ],
   "scripts": {
     "start": "node ./src/lod-lite.js",
-    "preview": "rm -fr *-lod-opendata && npm run start max=1",
+    "preview": "rm -fr lod-lite-output-* && npm run start max=1",
     "lint": "eslint --fix src/**/*.js",
     "prepublishOnly": "npm run lint",
     "version": "npm run lint && git add -A",
