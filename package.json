@@ -48,7 +48,7 @@
   },
   "homepage": "https://github.com/robertoentringer/lod-lite#readme",
   "dependencies": {
-    "lod-opendata": "0.0.15",
+    "lod-opendata": "0.0.17",
     "tar": "^4.4.13",
     "xml-flow": "^1.0.4"
   },
