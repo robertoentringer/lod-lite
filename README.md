@@ -32,7 +32,6 @@ $ npx lod-lite
 ## XML Schema
 Schema: https://www.lod.lu/schema/lod-opendata.xsd
 
-
 ## Data source
 
 Data from the "Lëtzebuerger Online Dictionnaire" (LOD)
