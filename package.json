@@ -10,8 +10,6 @@
     "src"
   ],
   "scripts": {
-    "start": "node ./src/lod-lite.js",
-    "preview": "rm -fr lod-lite-output-* && npm run start max=1",
     "lint": "eslint --fix src/**/*.js",
     "prepublishOnly": "npm run lint",
     "version": "npm run lint && git add -A",
@@ -50,6 +48,7 @@
   "homepage": "https://github.com/robertoentringer/lod-lite#readme",
   "dependencies": {
     "lod-opendata": "0.0.18",
+    "minimist": "^1.2.5",
     "tar": "^6.0.2",
     "xml-flow": "^1.0.4"
   },
