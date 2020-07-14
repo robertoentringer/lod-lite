@@ -31,7 +31,7 @@ const args = minimist(process.argv.slice(2), {
     resource: '',
     help: false,
     version: false,
-    schema: path.resolve('./src/schema.js')
+    schema: path.resolve(__dirname, 'schema.js')
   }
 })
 
