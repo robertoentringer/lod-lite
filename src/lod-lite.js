@@ -18,7 +18,7 @@ const items = {}
 
 const args = minimist(process.argv.slice(2), {
   number: ['max'],
-  string: ['output', 'schema'],
+  string: ['output', 'schema', 'resource'],
   boolean: ['help', 'version', 'media'],
   alias: {
     v: 'version',
@@ -27,18 +27,21 @@ const args = minimist(process.argv.slice(2), {
   default: {
     max: 0,
     media: true,
-    output: 'lod-lite-output',
+    output: 'output-lod-lite',
+    resource: '',
     help: false,
     version: false,
-    schema: './schema.js'
+    schema: path.resolve('./src/schema.js')
   }
 })
 
 const schema = (() => {
+  const filepath = path.resolve(args.schema)
   try {
-    return require(args.schema)
+    args.schema = filepath
+    return require(filepath)
   } catch (err) {
-    console.error('Cannot find schema file : "%s" %s', args.schema, '\n')
+    console.error('Cannot find schema file : "%s" %s', filepath, '\n')
     process.exit()
   }
 })()
@@ -48,9 +51,10 @@ const helper = (cmd) => {
 
   if (cmd === 'help')
     text = `lod-lite <options>\n
+    \rresource[] .... Optional URL to compressed lod file
+    \rschema=[] ..... Path to schema file
     \rmax=[] ........ Number of items to be extracted. e.g. max=1000 (default: all)
     \rmedia ......... Convert audio from base64 to mp3 file (default: true)
-    \rschema ........ Path to schema file
     \rhelp .......... Output usage information
     \rversion ....... Output Lod-lite version`
   else if (cmd === 'version') text = `${pack.name} : ${pack.version}`
@@ -95,7 +99,8 @@ const end = () => {
   process.exit()
 }
 
-const mkdir = (dir) => {
+const getFolder = (foldername) => {
+  const dir = path.join(args.output, foldername)
   try {
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true })
     return dir
@@ -104,8 +109,6 @@ const mkdir = (dir) => {
     process.exit()
   }
 }
-
-const getFolder = (dir) => mkdir(path.join(args.output, dir))
 
 const writeItems = (filename, data, id) => {
   try {
@@ -131,7 +134,7 @@ const find = (obj, tags) => {
   return typeof val === 'object' ? find(val, ['$text']) : val
 }
 
-const extract = (item) => {
+const saveResource = (item) => {
   const id = item['lod:meta']['lod:id']
 
   progress(id)
@@ -163,22 +166,49 @@ const extract = (item) => {
   if (Object.keys(items).length === args.max) end()
 }
 
+const readResource = () => {
+  const tarStream = tar.t({ filter: (path) => /\.xml$/.test(path) })
+
+  tarStream.on('entry', (entry) => flow(entry).on('tag:lod:item', saveResource).on('end', end))
+
+  get(args.resource, (resp) => {
+    const { statusCode } = resp
+    const contentType = resp.headers['content-type']
+
+    let error
+
+    if (statusCode !== 200) {
+      error = new Error('Request Failed.\n' + `Status Code: ${statusCode}`)
+    } else if (!/^application\/x-tar/.test(contentType)) {
+      error = new Error(
+        'Invalid content-type.\n' + `Expected application/x-tar but received ${contentType}`
+      )
+    }
+    if (error) console.error(error.message, '\n')
+
+    resp.pipe(tarStream)
+  }).on('error', (e) => {
+    console.error(e.message, '\n')
+    process.exit()
+  })
+}
+
 const main = async () => {
   process.on('SIGINT', end)
 
+  if (!args.resource) {
+    const {
+      resources: [{ url, format }]
+    } = await opendata('resources/{url,format}')
+    args.resource = url
+    args.output = path.basename(url, `.${format}`)
+  }
+
   Array.from(['help', 'version']).forEach((cmd) => args[cmd] === true && helper(cmd))
 
-  const {
-    resources: [{ url }]
-  } = await opendata('resources/{url}')
+  readResource()
 
-  const tarStream = tar.t({ filter: (path) => /\.xml$/.test(path) })
-
-  tarStream.on('entry', (entry) => flow(entry).on('tag:lod:item', extract).on('end', end))
-
-  get(url, (resp) => resp.pipe(tarStream))
-
-  console.info('%sParsing from : %s %s', '\n', url, '\n')
+  console.info('%sParsing from : %s %s', '\n', args.resource, '\n')
   console.info('Use schema file : %s %s', args.schema, '\n')
 }
 
