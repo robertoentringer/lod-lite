@@ -72,12 +72,26 @@ const progress = (progress) => {
 
 const end = () => {
   writeItems(path.join(args.output, `${args.output}.json`), JSON.stringify(items, null, 2))
+
   writeItems(
     path.join(args.output, `${args.output}.js`),
     'export default ' +
       util.inspect(items, {
         breakLength: 'Infinity'
       })
+  )
+
+  writeItems(
+    path.join(args.output, `${args.output}.array.js`),
+    'export default ' +
+      util.inspect(Object.values(items), {
+        breakLength: 'Infinity'
+      })
+  )
+
+  writeItems(
+    path.join(args.output, `${args.output}.array.json`),
+    JSON.stringify(Object.values(items), null, 2)
   )
 
   const hrend = process.hrtime(hrstart)
