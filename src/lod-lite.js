@@ -27,7 +27,7 @@ const args = minimist(process.argv.slice(2), {
   default: {
     max: 0,
     media: true,
-    output: 'output-lod-lite',
+    output: '',
     resource: '',
     help: false,
     version: false,
@@ -53,6 +53,7 @@ const helper = (cmd) => {
     text = `lod-lite <options>\n
     \rresource[] .... Optional URL to compressed lod file
     \rschema=[] ..... Path to schema file
+    \routput=[] ..... Set output folder (default: name of lod file)
     \rmax=[] ........ Number of items to be extracted. e.g. max=1000 (default: all)
     \rmedia ......... Convert audio from base64 to mp3 file (default: true)
     \rhelp .......... Output usage information
@@ -193,9 +194,9 @@ const readResource = () => {
 
     if (statusCode !== 200) {
       error = new Error('Request Failed.\n' + `Status Code: ${statusCode}`)
-    } else if (!/^application\/x-tar/.test(contentType)) {
+    } else if (!/^application\/gzip/.test(contentType)) {
       error = new Error(
-        'Invalid content-type.\n' + `Expected application/x-tar but received ${contentType}`
+        'Invalid content-type.\n' + `Expected application/gzip but received ${contentType}`
       )
     }
     if (error) console.error(error.message, '\n')
@@ -215,8 +216,10 @@ const main = async () => {
       resources: [{ url, format }]
     } = await opendata('resources/{url,format}')
     args.resource = url
-    args.output = path.basename(url, `.${format}`)
+    args.output = args.output || path.basename(url, `.${format}`)
   }
+
+  if (!args.output) args.output = 'output-lod-lite'
 
   Array.from(['help', 'version']).forEach((cmd) => args[cmd] === true && helper(cmd))
 
@@ -224,6 +227,8 @@ const main = async () => {
 
   console.info('%sParsing from : %s %s', '\n', args.resource, '\n')
   console.info('Use schema file : %s %s', args.schema, '\n')
+
+  console.log(args)
 }
 
 main()
