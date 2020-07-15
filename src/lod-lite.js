@@ -28,10 +28,11 @@ const args = minimist(process.argv.slice(2), {
     max: 0,
     media: true,
     output: '',
+    name: '',
     resource: '',
     help: false,
     version: false,
-    schema: path.resolve(__dirname, 'schema.js')
+    schema: path.join(__dirname, 'schema.js')
   }
 })
 
@@ -53,6 +54,7 @@ const helper = (cmd) => {
     text = `lod-lite <options>\n
     \rresource[] .... Optional URL to compressed lod file
     \rschema=[] ..... Path to schema file
+    \rname=[] ....... Name of the lod data merged items
     \routput=[] ..... Set output folder (default: name of lod file)
     \rmax=[] ........ Number of items to be extracted. e.g. max=1000 (default: all)
     \rmedia ......... Convert audio from base64 to mp3 file (default: true)
@@ -72,10 +74,10 @@ const progress = (progress) => {
 }
 
 const end = () => {
-  writeItems(path.join(args.output, `${args.output}.json`), JSON.stringify(items, null, 2))
+  writeItems(path.join(args.output, `${args.name}.json`), JSON.stringify(items, null, 0))
 
   writeItems(
-    path.join(args.output, `${args.output}.js`),
+    path.join(args.output, `${args.name}.js`),
     'export default ' +
       util.inspect(items, {
         breakLength: 'Infinity'
@@ -83,7 +85,7 @@ const end = () => {
   )
 
   writeItems(
-    path.join(args.output, `${args.output}.array.js`),
+    path.join(args.output, `${args.name}-array.js`),
     'export default ' +
       util.inspect(Object.values(items), {
         breakLength: 'Infinity'
@@ -91,8 +93,8 @@ const end = () => {
   )
 
   writeItems(
-    path.join(args.output, `${args.output}.array.json`),
-    JSON.stringify(Object.values(items), null, 2)
+    path.join(args.output, `${args.name}-array.json`),
+    JSON.stringify(Object.values(items), null)
   )
 
   const hrend = process.hrtime(hrstart)
@@ -211,15 +213,17 @@ const readResource = () => {
 const main = async () => {
   process.on('SIGINT', end)
 
-  if (!args.resource) {
+  if (args.resource) {
+    args.name = args.name || path.basename(args.resource, path.extname(args.resource))
+  } else {
     const {
       resources: [{ url, format }]
     } = await opendata('resources/{url,format}')
     args.resource = url
-    args.output = args.output || path.basename(url, `.${format}`)
+    args.name = args.name || path.basename(url, `.${format}`)
   }
 
-  if (!args.output) args.output = 'output-lod-lite'
+  args.output = args.output || args.name
 
   Array.from(['help', 'version']).forEach((cmd) => args[cmd] === true && helper(cmd))
 
@@ -227,7 +231,6 @@ const main = async () => {
 
   console.info('%sParsing from : %s %s', '\n', args.resource, '\n')
   console.info('Use schema file : %s %s', args.schema, '\n')
-
   console.log(args)
 }
 
