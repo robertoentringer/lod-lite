@@ -13,23 +13,24 @@ const util = require('util')
 const minimist = require('minimist')
 
 const hrstart = process.hrtime()
-const infos = { fail: [], small: [], partial: 0, audio: 0 }
+const infos = { fail: [], small: [], audio: 0 }
 const items = {}
 
 const args = minimist(process.argv.slice(2), {
   number: ['max'],
   string: ['output', 'schema', 'resource'],
-  boolean: ['help', 'version', 'media'],
+  boolean: ['help', 'version', 'audio', 'single'],
   alias: {
     v: 'version',
     h: 'help'
   },
   default: {
     max: 0,
-    media: true,
+    audio: false,
     output: '',
     name: '',
     resource: '',
+    single: false,
     jsonobj: false,
     jsonarray: false,
     jsobj: false,
@@ -60,13 +61,14 @@ const helper = (cmd) => {
     \rresource[] .... Optional URL to compressed lod file
     \rschema=[] ..... Path to schema file
     \rname=[] ....... Name of the data merged items
+    \rsingle ........ Save single files
     \routput=[] ..... Set output folder
     \rmax=[] ........ Number of items to be extracted. e.g. max=1000
     \rjsonobj[]...... Extract items to json obj. Optional pass the name file
     \rjsonarray[].... Extract items to json array of objects. Optional pass the name file
     \rjsobj[]........ Extract items to js obj. Optional pass the name file
     \rjsarray[]...... Extract items to js array of objects. Optional pass the name file
-    \rmedia ......... Convert audio from base64 to mp3 file
+    \raudio ......... Convert audio from base64 to mp3 file
     \rhelp .......... Output usage information
     \rversion ....... Output Lod-lite version`
   else if (cmd === 'version') text = `${pack.name} : ${pack.version}`
@@ -83,47 +85,31 @@ const progress = (progress) => {
 }
 
 const end = () => {
-  if (args.jsonobj)
-    writeItems(
-      path.join(
-        args.output,
-        `${typeof args.jsobj === 'string' ? args.jsobj : args.name + '-obj'}.json`
-      ),
-      JSON.stringify(items, null, 0)
-    )
+  if (args.jsonobj) {
+    const filename = `${typeof args.jsobj === 'string' ? args.jsobj : args.name + '-obj'}.json`
+    const data = JSON.stringify(items, null, 0)
+    writeItems(path.join(getFolder(args.output), filename), data, filename)
+  }
 
-  if (args.jsonarray)
-    writeItems(
-      path.join(
-        args.output,
-        `${typeof args.jsonarray === 'string' ? args.jsonarray : args.name + '-array'}.json`
-      ),
-      JSON.stringify(Object.values(items), null)
-    )
+  if (args.jsonarray) {
+    const filename = `${
+      typeof args.jsonarray === 'string' ? args.jsonarray : args.name + '-array'
+    }.json`
+    const data = JSON.stringify(Object.values(items))
+    writeItems(path.join(getFolder(args.output), filename), data, filename)
+  }
 
-  if (args.jsobj)
-    writeItems(
-      path.join(
-        args.output,
-        `${typeof args.jsobj === 'string' ? args.jsobj : args.name + '-obj'}.js`
-      ),
-      'export default ' +
-        util.inspect(items, {
-          breakLength: 'Infinity'
-        })
-    )
+  if (args.jsobj) {
+    const filename = `${typeof args.jsobj === 'string' ? args.jsobj : args.name + '-obj'}.js`
+    const data = `export default ${util.inspect(items, { breakLength: 'Infinity' })}`
+    writeItems(path.join(getFolder(args.output), filename), data, filename)
+  }
 
-  if (args.jsarray)
-    writeItems(
-      path.join(
-        args.output,
-        `${typeof args.jsarray === 'string' ? args.jsarray : args.name + '-array'}.js`
-      ),
-      'export default ' +
-        util.inspect(Object.values(items), {
-          breakLength: 'Infinity'
-        })
-    )
+  if (args.jsarray) {
+    const filename = `${typeof args.jsarray === 'string' ? args.jsarray : args.name + '-array'}.js`
+    const data = `export default ${util.inspect(Object.values(items), { breakLength: 'Infinity' })}`
+    writeItems(path.join(getFolder(args.output), filename), data, filename)
+  }
 
   const hrend = process.hrtime(hrstart)
   const time = new Date(hrend[0] * 1000).toISOString().substr(11, 8)
@@ -135,8 +121,7 @@ const end = () => {
   console.info('√ Items extracted : ', Object.keys(items).length)
 
   if (infos.small.length) console.info('⚠︎ Mp3 very small: ', infos.small.length, infos.small)
-  if (args.media) console.info('☊ Audio extracted: ', infos.audio)
-  if (args.partial) console.info('? Items without all keys: ', infos.partial)
+  if (args.audio) console.info('☊ Audio extracted: ', infos.audio)
   if (infos.fail.length > 0) console.info('✕ Unable to save items: ', infos.fail.length, infos.fail)
 
   process.stdout.write('\n')
@@ -158,10 +143,8 @@ const getFolder = (foldername) => {
 const writeItems = (filename, data, id) => {
   try {
     fs.writeFileSync(filename, data)
-    return true
   } catch (err) {
     infos.fail.push(id)
-    return false
   }
 }
 
@@ -190,7 +173,7 @@ const saveResource = (item) => {
     return obj
   }, {})
 
-  if (args.media && 'audio' in obj) {
+  if (args.audio && 'audio' in obj) {
     const buff = new Buffer.from(obj.audio, 'base64')
 
     if (buff.length < 1000) infos.small.push(id)
@@ -200,13 +183,17 @@ const saveResource = (item) => {
       infos.audio++
   }
 
-  const dataJson = JSON.stringify(obj, null, 2)
-  const dataJs = 'export default ' + util.inspect(obj, { breakLength: 'Infinity' })
+  if (args.single) {
+    const dataJson = JSON.stringify(obj, null, 2)
+    const dataJs = 'export default ' + util.inspect(obj, { breakLength: 'Infinity' })
 
-  const saveJson = writeItems(path.join(getFolder('json'), `${id}.json`), dataJson, id)
-  const saveJs = writeItems(path.join(getFolder('js'), `${id}.js`), dataJs, id)
+    if (args.jsonarray || args.jsonobj)
+      writeItems(path.join(getFolder('json'), `${id}.json`), dataJson, id)
 
-  if (saveJson && saveJs) items[id] = obj
+    if (args.jsarray || args.jsobj) writeItems(path.join(getFolder('js'), `${id}.js`), dataJs, id)
+  }
+
+  items[id] = obj
 
   if (Object.keys(items).length === args.max) end()
 }
