@@ -246,7 +246,6 @@ const main = async () => {
 
   console.info('%sParsing from : %s %s', '\n', args.resource, '\n')
   console.info('Use schema file : %s %s', args.schema, '\n')
-  console.log(args)
 }
 
 main()
