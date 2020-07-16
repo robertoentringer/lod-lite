@@ -30,6 +30,10 @@ const args = minimist(process.argv.slice(2), {
     output: '',
     name: '',
     resource: '',
+    jsonobj: false,
+    jsonarray: false,
+    jsobj: false,
+    jsarray: true,
     help: false,
     version: false,
     schema: path.join(__dirname, 'schema.js')
@@ -51,13 +55,18 @@ const helper = (cmd) => {
   let text
 
   if (cmd === 'help')
-    text = `lod-lite <options>\n
+    text = `Help for the command-line ${pack.name} v.${pack.version}\n
+    \r${pack.name} <options>\n
     \rresource[] .... Optional URL to compressed lod file
     \rschema=[] ..... Path to schema file
-    \rname=[] ....... Name of the lod data merged items
-    \routput=[] ..... Set output folder (default: name of lod file)
-    \rmax=[] ........ Number of items to be extracted. e.g. max=1000 (default: all)
-    \rmedia ......... Convert audio from base64 to mp3 file (default: true)
+    \rname=[] ....... Name of the data merged items
+    \routput=[] ..... Set output folder
+    \rmax=[] ........ Number of items to be extracted. e.g. max=1000
+    \rjsonobj[]...... Extract items to json obj. Optional pass the name file
+    \rjsonarray[].... Extract items to json array of objects. Optional pass the name file
+    \rjsobj[]........ Extract items to js obj. Optional pass the name file
+    \rjsarray[]...... Extract items to js array of objects. Optional pass the name file
+    \rmedia ......... Convert audio from base64 to mp3 file
     \rhelp .......... Output usage information
     \rversion ....... Output Lod-lite version`
   else if (cmd === 'version') text = `${pack.name} : ${pack.version}`
@@ -74,28 +83,47 @@ const progress = (progress) => {
 }
 
 const end = () => {
-  writeItems(path.join(args.output, `${args.name}.json`), JSON.stringify(items, null, 0))
+  if (args.jsonobj)
+    writeItems(
+      path.join(
+        args.output,
+        `${typeof args.jsobj === 'string' ? args.jsobj : args.name + '-obj'}.json`
+      ),
+      JSON.stringify(items, null, 0)
+    )
 
-  writeItems(
-    path.join(args.output, `${args.name}.js`),
-    'export default ' +
-      util.inspect(items, {
-        breakLength: 'Infinity'
-      })
-  )
+  if (args.jsonarray)
+    writeItems(
+      path.join(
+        args.output,
+        `${typeof args.jsonarray === 'string' ? args.jsonarray : args.name + '-array'}.json`
+      ),
+      JSON.stringify(Object.values(items), null)
+    )
 
-  writeItems(
-    path.join(args.output, `${args.name}-array.js`),
-    'export default ' +
-      util.inspect(Object.values(items), {
-        breakLength: 'Infinity'
-      })
-  )
+  if (args.jsobj)
+    writeItems(
+      path.join(
+        args.output,
+        `${typeof args.jsobj === 'string' ? args.jsobj : args.name + '-obj'}.js`
+      ),
+      'export default ' +
+        util.inspect(items, {
+          breakLength: 'Infinity'
+        })
+    )
 
-  writeItems(
-    path.join(args.output, `${args.name}-array.json`),
-    JSON.stringify(Object.values(items), null)
-  )
+  if (args.jsarray)
+    writeItems(
+      path.join(
+        args.output,
+        `${typeof args.jsarray === 'string' ? args.jsarray : args.name + '-array'}.js`
+      ),
+      'export default ' +
+        util.inspect(Object.values(items), {
+          breakLength: 'Infinity'
+        })
+    )
 
   const hrend = process.hrtime(hrstart)
   const time = new Date(hrend[0] * 1000).toISOString().substr(11, 8)
