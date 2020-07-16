@@ -131,8 +131,8 @@ const end = () => {
   const hrend = process.hrtime(hrstart)
   const time = new Date(hrend[0] * 1000).toISOString().substr(11, 8)
 
-  process.stdout.cursorTo(0)
-  process.stdout.clearLine()
+  readline.cursorTo(process.stdout, 0)
+  readline.clearLine(process.stdout)
 
   console.info('Output folder: ', path.resolve(args.output), '\n')
 
