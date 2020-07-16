@@ -32,9 +32,9 @@ const args = minimist(process.argv.slice(2), {
     resource: '',
     single: false,
     jsonobj: false,
-    jsonarray: false,
+    jsonarray: true,
     jsobj: false,
-    jsarray: true,
+    jsarray: false,
     help: false,
     version: false,
     schema: path.join(__dirname, 'schema.js')
