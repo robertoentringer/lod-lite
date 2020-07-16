@@ -11,6 +11,7 @@ const fs = require('fs')
 const pack = require('../package.json')
 const util = require('util')
 const minimist = require('minimist')
+const readline = require('readline')
 
 const hrstart = process.hrtime()
 const infos = { fail: [], small: [], audio: 0 }
@@ -92,8 +93,8 @@ const helper = (cmd) => {
 }
 
 const progress = (progress) => {
-  process.stdout.clearLine()
-  process.stdout.cursorTo(0)
+  readline.clearLine(process.stdout)
+  readline.cursorTo(process.stdout, 0)
   process.stdout.write(progress)
 }
 
