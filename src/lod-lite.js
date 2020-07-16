@@ -88,7 +88,7 @@ const end = () => {
   if (args.jsonobj) {
     const filename = `${typeof args.jsobj === 'string' ? args.jsobj : args.name + '-obj'}.json`
     const data = JSON.stringify(items, null, 0)
-    writeItems(path.join(getFolder(args.output), filename), data, filename)
+    writeItems(path.join(getFolder(), filename), data, filename)
   }
 
   if (args.jsonarray) {
@@ -96,19 +96,19 @@ const end = () => {
       typeof args.jsonarray === 'string' ? args.jsonarray : args.name + '-array'
     }.json`
     const data = JSON.stringify(Object.values(items))
-    writeItems(path.join(getFolder(args.output), filename), data, filename)
+    writeItems(path.join(getFolder(), filename), data, filename)
   }
 
   if (args.jsobj) {
     const filename = `${typeof args.jsobj === 'string' ? args.jsobj : args.name + '-obj'}.js`
     const data = `export default ${util.inspect(items, { breakLength: 'Infinity' })}`
-    writeItems(path.join(getFolder(args.output), filename), data, filename)
+    writeItems(path.join(getFolder(), filename), data, filename)
   }
 
   if (args.jsarray) {
     const filename = `${typeof args.jsarray === 'string' ? args.jsarray : args.name + '-array'}.js`
     const data = `export default ${util.inspect(Object.values(items), { breakLength: 'Infinity' })}`
-    writeItems(path.join(getFolder(args.output), filename), data, filename)
+    writeItems(path.join(getFolder(), filename), data, filename)
   }
 
   const hrend = process.hrtime(hrstart)
@@ -117,11 +117,19 @@ const end = () => {
   process.stdout.cursorTo(0)
   process.stdout.clearLine()
 
+  console.info('Output folder: ', path.resolve(args.output), '\n')
+
+  if (args.audio) console.info('Audio file folder:', path.resolve(getFolder('audio')), '\n')
+
   console.info('⦿ Execution time: ', time)
   console.info('√ Items extracted : ', Object.keys(items).length)
 
   if (infos.small.length) console.info('⚠︎ Mp3 very small: ', infos.small.length, infos.small)
-  if (args.audio) console.info('☊ Audio extracted: ', infos.audio)
+
+  if (args.audio) {
+    console.info('☊ Extracted audios: ', infos.audio)
+  }
+
   if (infos.fail.length > 0) console.info('✕ Unable to save items: ', infos.fail.length, infos.fail)
 
   process.stdout.write('\n')
@@ -129,7 +137,7 @@ const end = () => {
   process.exit()
 }
 
-const getFolder = (foldername) => {
+const getFolder = (foldername = '') => {
   const dir = path.join(args.output, foldername)
   try {
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true })
@@ -143,8 +151,10 @@ const getFolder = (foldername) => {
 const writeItems = (filename, data, id) => {
   try {
     fs.writeFileSync(filename, data)
+    return true
   } catch (err) {
     infos.fail.push(id)
+    return false
   }
 }
 
