@@ -19,10 +19,18 @@ const items = {}
 const args = minimist(process.argv.slice(2), {
   number: ['max'],
   string: ['output', 'schema', 'resource'],
-  boolean: ['help', 'version', 'audio', 'single'],
+  boolean: ['help', 'version', 'audio', 'single', 'pretty'],
   alias: {
     v: 'version',
-    h: 'help'
+    h: 'help',
+    p: 'pretty',
+    a: 'audio',
+    s: 'single',
+    r: 'resource',
+    m: 'max',
+    o: 'output',
+    n: 'name',
+    c: 'schema'
   },
   default: {
     max: 0,
@@ -32,6 +40,7 @@ const args = minimist(process.argv.slice(2), {
     resource: '',
     single: false,
     jsonobj: false,
+    pretty: false,
     jsonarray: true,
     jsobj: false,
     jsarray: false,
@@ -57,20 +66,24 @@ const helper = (cmd) => {
 
   if (cmd === 'help')
     text = `Help for the command-line ${pack.name} v.${pack.version}\n
-    \r${pack.name} <options>\n
-    \rresource[] .... Optional URL to compressed lod file
-    \rschema=[] ..... Path to schema file
-    \rname=[] ....... Name of the data merged items
-    \rsingle ........ Save single files
-    \routput=[] ..... Set output folder
-    \rmax=[] ........ Number of items to be extracted. e.g. max=1000
-    \rjsonobj[]...... Extract items to json obj. Optional pass the name file
-    \rjsonarray[].... Extract items to json array of objects. Optional pass the name file
-    \rjsobj[]........ Extract items to js obj. Optional pass the name file
-    \rjsarray[]...... Extract items to js array of objects. Optional pass the name file
-    \raudio ......... Convert audio from base64 to mp3 file
-    \rhelp .......... Output usage information
-    \rversion ....... Output Lod-lite version`
+    \r${pack.name} <options>
+
+    \r-s, --single ........ Save single files
+    \r-a, --audio ......... Convert audio from base64 to mp3 file
+    \r-p, --pretty ........ Pretty format output files
+    \r-r, --resource[] .... Optional URL to compressed lod file
+    \r-c, --schema=[] ..... Path to schema file
+    \r-n, --name=[] ....... Name of the data merged items
+    \r-o, --output=[] ..... Set output folder
+    \r-m, --max=[] ........ Number of items to be extracted. e.g. max=1000
+
+    \r--jsonobj[].......... Extract items to json obj. Optional pass the name file
+    \r--jsonarray[]........ Extract items to json array of objects. Optional pass the name file
+    \r--jsobj[]............ Extract items to js obj. Optional pass the name file
+    \r--jsarray[].......... Extract items to js array of objects. Optional pass the name file
+
+    \r-h, --help ......... Output usage information
+    \r--version .......... Output Lod-lite version`
   else if (cmd === 'version') text = `${pack.name} : ${pack.version}`
 
   process.stdout.write(`\n${text}\n\n`)
@@ -87,7 +100,7 @@ const progress = (progress) => {
 const end = () => {
   if (args.jsonobj) {
     const filename = `${typeof args.jsobj === 'string' ? args.jsobj : args.name + '-obj'}.json`
-    const data = JSON.stringify(items, null, 0)
+    const data = JSON.stringify(items, null, args.pretty ? 2 : 0)
     writeItems(path.join(getFolder(), filename), data, filename)
   }
 
@@ -95,13 +108,16 @@ const end = () => {
     const filename = `${
       typeof args.jsonarray === 'string' ? args.jsonarray : args.name + '-array'
     }.json`
-    const data = JSON.stringify(Object.values(items))
+    const data = JSON.stringify(Object.values(items), null, args.pretty ? 2 : 0)
     writeItems(path.join(getFolder(), filename), data, filename)
   }
 
   if (args.jsobj) {
     const filename = `${typeof args.jsobj === 'string' ? args.jsobj : args.name + '-obj'}.js`
-    const data = `export default ${util.inspect(items, { breakLength: 'Infinity' })}`
+    const data = `export default ${util.inspect(
+      items,
+      !args.pretty && { breakLength: 'Infinity' }
+    )}`
     writeItems(path.join(getFolder(), filename), data, filename)
   }
 
