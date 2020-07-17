@@ -19,8 +19,8 @@ const items = {}
 
 const args = minimist(process.argv.slice(2), {
   number: ['max'],
-  string: ['output', 'schema', 'resource'],
-  boolean: ['help', 'version', 'audio', 'single', 'pretty'],
+  string: ['output', 'schema', 'resource', 'name'],
+  boolean: ['help', 'version', 'single', 'pretty'],
   alias: {
     v: 'version',
     h: 'help',
@@ -35,7 +35,7 @@ const args = minimist(process.argv.slice(2), {
   },
   default: {
     max: 0,
-    audio: false,
+    audio: 'mp3',
     output: '',
     name: '',
     resource: '',
@@ -69,19 +69,19 @@ const helper = (cmd) => {
     text = `Help for the command-line ${pack.name} v.${pack.version}\n
     \r${pack.name} <options>
 
-    \r-s, --single ........ Save single files
-    \r-a, --audio ......... Convert audio from base64 to mp3 file
-    \r-p, --pretty ........ Pretty format output files
-    \r-r, --resource[] .... Optional URL to compressed lod file
-    \r-c, --schema=[] ..... Path to schema file
-    \r-n, --name=[] ....... Name of the data merged items
-    \r-o, --output=[] ..... Set output folder
-    \r-m, --max=[] ........ Number of items to be extracted. e.g. max=1000
+    \r-s, --single ........ Save single files [default: false]
+    \r-a, --audio ......... Convert audio from base64 to mp3 file. Options : base64, mp3, skip [default: mp3]
+    \r-p, --pretty ........ Pretty format output files [default: false]
+    \r-r, --resource[] .... Optional URL to compressed lod file [default: last lod resource from data.public.lu]
+    \r-c, --schema=[] ..... Path to schema file [default:  schema.js file provides by package)
+    \r-n, --name=[] ....... Name of the data merged items [default: name of lod file source]
+    \r-o, --output=[] ..... Set output folder [default: name of lod file source]
+    \r-m, --max=[] ........ Number of items to be extracted. [default: no limit]
 
-    \r--jsonobj[].......... Extract items to json obj. Optional pass the name file
-    \r--jsonarray[]........ Extract items to json array of objects. Optional pass the name file
-    \r--jsobj[]............ Extract items to js obj. Optional pass the name file
-    \r--jsarray[].......... Extract items to js array of objects. Optional pass the name file
+    \r--jsonobj[].......... Extract items to json obj. Optional pass the name file [default: false]
+    \r--jsonarray[]........ Extract items to json array of objects. Optional pass the name file [default: true]
+    \r--jsobj[]............ Extract items to js obj. Optional pass the name file [default: false]
+    \r--jsarray[].......... Extract items to js array of objects. Optional pass the name file [default: false]
 
     \r-h, --help ......... Output usage information
     \r--version .......... Output Lod-lite version`
@@ -200,14 +200,17 @@ const saveResource = (item) => {
     return obj
   }, {})
 
-  if (args.audio && 'audio' in obj) {
+  if ('audio' in obj) {
     const buff = new Buffer.from(obj.audio, 'base64')
 
     if (buff.length < 1000) infos.small.push(id)
 
-    writeItems(path.join(getFolder('audio'), `${id}.mp3`), buff, id) &&
-      delete obj.audio &&
+    if (args.audio == 'mp3') {
+      writeItems(path.join(getFolder('audio'), `${id}.mp3`), buff, id) && infos.audio++
+      delete obj.audio
+    } else if (args.audio == 'base64') {
       infos.audio++
+    } else if (args.audio) delete obj.audio
   }
 
   if (args.single) {
@@ -252,8 +255,8 @@ const readResource = () => {
   })
 }
 
-const main = async () => {
-  process.on('SIGINT', end)
+const normalizeArgs = async () => {
+  if (args.audio == 'skip') args.audio = false
 
   if (args.resource) {
     args.name = args.name || path.basename(args.resource, path.extname(args.resource))
@@ -266,6 +269,12 @@ const main = async () => {
   }
 
   args.output = args.output || args.name
+}
+
+const main = async () => {
+  process.on('SIGINT', end)
+
+  await normalizeArgs()
 
   Array.from(['help', 'version']).forEach((cmd) => args[cmd] === true && helper(cmd))
 
@@ -273,6 +282,7 @@ const main = async () => {
 
   console.info('%sParsing from : %s %s', '\n', args.resource, '\n')
   console.info('Use schema file : %s %s', args.schema, '\n')
+  console.log(args)
 }
 
 main()
