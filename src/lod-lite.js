@@ -14,7 +14,7 @@ const minimist = require('minimist')
 const readline = require('readline')
 
 const hrstart = process.hrtime()
-const infos = { fail: [], small: [], audio: 0 }
+const infos = { fail: [], small: [], files: 0 }
 const items = {}
 
 const args = minimist(process.argv.slice(2), {
@@ -25,7 +25,6 @@ const args = minimist(process.argv.slice(2), {
     v: 'version',
     h: 'help',
     p: 'pretty',
-    a: 'audio',
     s: 'single',
     r: 'resource',
     m: 'max',
@@ -35,7 +34,6 @@ const args = minimist(process.argv.slice(2), {
   },
   default: {
     max: 0,
-    audio: 'mp3',
     output: '',
     name: '',
     resource: '',
@@ -70,7 +68,6 @@ const helper = (cmd) => {
     \r${pack.name} <options>
 
     \r-s, --single ........ Save single files [default: false]
-    \r-a, --audio ......... Convert audio from base64 to mp3 file. Options : base64, mp3, skip [default: mp3]
     \r-p, --pretty ........ Pretty format output files [default: false]
     \r-r, --resource[] .... Optional URL to compressed lod file [default: last lod resource from data.public.lu]
     \r-c, --schema=[] ..... Path to schema file [default:  schema.js file provides by package)
@@ -136,15 +133,15 @@ const end = () => {
 
   console.info('Output folder: ', path.resolve(args.output), '\n')
 
-  if (args.audio) console.info('Audio file folder:', path.resolve(getFolder('audio')), '\n')
+  if (args.files) console.info('Files folder:', path.resolve(getFolder('files')), '\n')
 
   console.info('⦿ Execution time: ', time)
   console.info('√ Items extracted : ', Object.keys(items).length)
 
   if (infos.small.length) console.info('⚠︎ Mp3 very small: ', infos.small.length, infos.small)
 
-  if (args.audio) {
-    console.info('☊ Extracted audios: ', infos.audio)
+  if (args.files) {
+    console.info('⇱ Extracted files: ', infos.files)
   }
 
   if (infos.fail.length > 0) console.info('✕ Unable to save items: ', infos.fail.length, infos.fail)
@@ -189,33 +186,53 @@ const find = (obj, tags) => {
   return typeof val === 'object' ? find(val, ['$text']) : val
 }
 
-const saveResource = (item) => {
-  const id = item['lod:meta']['lod:id']
+const saveBase64 = (file) => {
+  const buff = new Buffer.from(file.data, 'base64')
 
-  progress(id)
+  if (buff.length < 1000) infos.small.push(file.id)
 
-  const obj = Object.keys(schema).reduce((obj, key) => {
-    const val = find(item, schema[key])
+  const filepath = path.join(getFolder(file.folder), `${file.id}.${file.ext}`)
+
+  writeItems(filepath, buff, file.id) && infos.files++
+}
+
+const getDeep = (entry, schema) =>
+  Object.keys(schema).reduce((obj, key) => {
+    const val = find(entry, schema[key])
     if (val) obj[key] = val
     return obj
   }, {})
 
-  if ('audio' in obj) {
-    const buff = new Buffer.from(obj.audio, 'base64')
+const getSequential = (entry, schema) =>
+  schema.reduce((a, item) => (a = a[item]), Object.assign(entry))
 
-    if (buff.length < 1000) infos.small.push(id)
-
-    if (args.audio == 'mp3') {
-      writeItems(path.join(getFolder('audio'), `${id}.mp3`), buff, id) && infos.audio++
-      delete obj.audio
-    } else if (args.audio == 'base64') {
-      infos.audio++
-    } else if (args.audio) delete obj.audio
+const getFiles = (entry, schema, id) => {
+  for (const file of schema) {
+    const data = find(entry, file.tag)
+    if (data) saveBase64(Object.assign(file, { data, id }))
   }
+}
+
+const saveResource = (entry) => {
+  //console.log(entry)
+
+  //process.exit()
+
+  const id = getSequential(entry, schema.meta.id).toString()
+
+  //const version = getSequential(entry, schema.meta.version)
+
+  //console.log(entry)
+
+  progress(id)
+
+  getFiles(entry, schema.files, id)
+
+  const item = getDeep(entry, schema.tags)
 
   if (args.single) {
-    const dataJson = JSON.stringify(obj, null, 2)
-    const dataJs = 'export default ' + util.inspect(obj, { breakLength: 'Infinity' })
+    const dataJson = JSON.stringify(item, null, 2)
+    const dataJs = 'export default ' + util.inspect(item, { breakLength: 'Infinity' })
 
     if (args.jsonarray || args.jsonobj)
       writeItems(path.join(getFolder('json'), `${id}.json`), dataJson, id)
@@ -223,7 +240,7 @@ const saveResource = (item) => {
     if (args.jsarray || args.jsobj) writeItems(path.join(getFolder('js'), `${id}.js`), dataJs, id)
   }
 
-  items[id] = obj
+  items[id] = item
 
   if (Object.keys(items).length === args.max) end()
 }
@@ -231,7 +248,15 @@ const saveResource = (item) => {
 const readResource = () => {
   const tarStream = tar.t({ filter: (path) => /\.xml$/.test(path) })
 
-  tarStream.on('entry', (entry) => flow(entry).on('tag:lod:item', saveResource).on('end', end))
+  tarStream.on('entry', (entry) =>
+    flow(entry)
+      .on(`tag:${schema.root}`, saveResource)
+      .on('end', end)
+      .on('error', (e) => {
+        console.error(e, '\n')
+        process.exit()
+      })
+  )
 
   get(args.resource, (resp) => {
     const { statusCode } = resp
@@ -256,8 +281,6 @@ const readResource = () => {
 }
 
 const normalizeArgs = async () => {
-  if (args.audio == 'skip') args.audio = false
-
   if (args.resource) {
     args.name = args.name || path.basename(args.resource, path.extname(args.resource))
   } else {
@@ -282,7 +305,6 @@ const main = async () => {
 
   console.info('%sParsing from : %s %s', '\n', args.resource, '\n')
   console.info('Use schema file : %s %s', args.schema, '\n')
-  console.log(args)
 }
 
 main()
