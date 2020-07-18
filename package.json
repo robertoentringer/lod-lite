@@ -11,7 +11,7 @@
   ],
   "scripts": {
     "lint": "eslint --fix src/**/*.js",
-    "demo": "rm -fr lod && node src/lod-lite -o lod -m 15 -n lod -a -p --jsonarray lod",
+    "demo": "clear && rm -fr lod && node src/lod-lite -o lod -m 15 -n lod -a -p --jsonarray lod",
     "semantic-release:config": "npx semantic-release-cli setup --gh-token=$GH_TOKEN --npm-token=$NPM_TOKEN --gh-username=$GH_USERNAME --npm-username=$NPM_USERNAME",
     "semantic-release": "semantic-release"
   },

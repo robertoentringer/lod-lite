@@ -6,32 +6,31 @@ const log = require('./logger')
 const schema = require('./getSchema.js')
 
 const getResource = (url, onTag, onEnd) => {
-  const tarStream = tar.t({ filter: (path) => /\.xml$/.test(path) })
+  const tarStream = tar.t({ filter: (file) => /\.xml$/.test(file) })
+
   tarStream.on('entry', (entry) =>
     flow(entry)
       .on(`tag:${schema().root}`, onTag)
       .on('end', onEnd)
-      .on('error', (e) => {
-        log.error('Tar %o', e.message)
-        process.exit()
-      })
+      .on('error', (err) => log.fail(err.message))
   )
 
   try {
     get(url, (resp) => {
       const { statusCode } = resp
       const contentType = resp.headers['content-type']
-      log.info('Request from : %o', url)
-      if (statusCode !== 200) log.error('Request Failed. Status Code: %o', statusCode)
-      else if (!/^application\/gzip/.test(contentType))
-        log.error('Content-type %o not supported. Expected %o', contentType, 'application/gzip')
+      const test = !/^application\/gzip/.test(contentType)
+
+      log.info('Request from :', url)
+
+      if (statusCode !== 200) log.fail('Request Failed. Status Code :', statusCode)
+      else if (test)
+        log.fail(`Content-type '${contentType}' not supported.`, "Expected 'application/gzip'.")
+
       resp.pipe(tarStream)
-    }).on('error', (e) => {
-      log.erro('Http %o', e.message)
-      process.exit()
-    })
+    }).on('error', (err) => log.fail(err.message))
   } catch (err) {
-    log.error(err.message)
+    log.fail(err.message)
   }
 }
 

@@ -1,11 +1,21 @@
-const logger = require('debug')
+const readline = require('readline')
 
-const log = (namespace, ...info) => {
-  logger.enable(namespace)
-  logger(namespace)(...info)
-  console.log()
+const line = '\n'
+
+module.exports.newline = () => console.log(line)
+module.exports.exit = () => process.exit()
+
+module.exports.hrstart = () => process.hrtime()
+module.exports.hrend = () => process.hrtime(exports.hrstart)
+module.exports.time = () => new Date(exports.hrend[0] * 1000).toISOString().substr(11, 8)
+
+module.exports.new = (prefix, ...info) => console.log(prefix, ...info, line)
+module.exports.info = (...info) => console.log('√', ...info, line)
+module.exports.error = (...info) => console.log('✘', ...info, line)
+module.exports.fail = (...info) => console.log('✘', ...info, line) && exports.exit()
+
+module.exports.update = (string) => {
+  readline.clearLine(process.stdout)
+  readline.cursorTo(process.stdout, 0)
+  process.stdout.write(string + '')
 }
-
-module.exports.new = (namespace, ...info) => log(namespace, ...info)
-module.exports.info = (...info) => log('√', ...info)
-module.exports.error = (...info) => log('✘', ...info)
