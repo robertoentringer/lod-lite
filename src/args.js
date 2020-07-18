@@ -1,5 +1,6 @@
 const path = require('path')
 const minimist = require('minimist')
+const opendata = require('lod-opendata')
 
 const aliases = {
   v: 'version',
@@ -38,8 +39,21 @@ const args = minimist(process.argv.slice(2), {
   default: defaults
 })
 
+const fill = async () => {
+  if (args.resource) {
+    args.name = args.name || path.basename(args.resource, path.extname(args.resource))
+  } else {
+    const {
+      resources: [{ url, format }]
+    } = await opendata('resources/{url,format}')
+    update('resource', url)
+    update('name', args.name || path.basename(url, `.${format}`))
+  }
+  update('output', args.output || args.name)
+}
+
 const update = (key, value) => {
   args[key] = args[Object.keys(aliases).find((k) => aliases[k] === key)] = value
 }
 
-module.exports = { args, update }
+module.exports = { args, update, fill }
