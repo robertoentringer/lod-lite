@@ -22,7 +22,7 @@ const entries = {}
 const saveEntry = (entry) => {
   const id = getSequential(entry, schema().meta.id).toString()
 
-  //log.update(id)
+  log.update(id)
 
   getFiles(entry, schema().files, id)
 
@@ -40,7 +40,10 @@ const saveEntry = (entry) => {
 
   entries[id] = item
 
-  if (Object.keys(entries).length === args.max) end()
+  if (Object.keys(entries).length === args.max) {
+    log.clear()
+    end()
+  }
 }
 
 const end = () => {
