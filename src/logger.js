@@ -4,6 +4,10 @@ const line = '\n'
 
 module.exports.newline = () => console.log(line)
 module.exports.exit = () => process.exit()
+module.exports.clear = () => {
+  readline.clearLine(process.stdout)
+  readline.cursorTo(process.stdout, 0)
+}
 
 module.exports.hrstart = () => process.hrtime()
 module.exports.hrend = () => process.hrtime(exports.hrstart)
@@ -15,7 +19,6 @@ module.exports.error = (...info) => console.log('✘', ...info, line)
 module.exports.fail = (...info) => console.log('✘', ...info, line) && exports.exit()
 
 module.exports.update = (string) => {
-  readline.clearLine(process.stdout)
-  readline.cursorTo(process.stdout, 0)
-  process.stdout.write(string + '')
+  exports.clear()
+  process.stdout.write(string)
 }
