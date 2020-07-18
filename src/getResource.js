@@ -9,7 +9,7 @@ const getResource = (url, onTag, onEnd) => {
   const tarStream = tar.t({ filter: (path) => /\.xml$/.test(path) })
   tarStream.on('entry', (entry) =>
     flow(entry)
-      .on(`tag:${schema.root}`, onTag)
+      .on(`tag:${schema().root}`, onTag)
       .on('end', onEnd)
       .on('error', (e) => {
         log.error('Tar %o', e.message)

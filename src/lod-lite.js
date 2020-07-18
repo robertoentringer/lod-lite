@@ -35,13 +35,13 @@ const end = () => {
 }
 
 const saveEntry = (entry) => {
-  const id = getSequential(entry, schema.meta.id).toString()
+  const id = getSequential(entry, schema().meta.id).toString()
 
-  log.info('Lod version: %o', getSequential(entry, schema.meta.version))
+  log.info('Lod version: %o', getSequential(entry, schema().meta.version))
 
-  getFiles(entry, schema.files, id)
+  getFiles(entry, schema().files, id)
 
-  const item = getDeep(entry, schema.tags)
+  const item = getDeep(entry, schema().tags)
 
   if (args.single) {
     const dataJson = JSON.stringify(item, null, 2)
@@ -77,7 +77,12 @@ const main = () => {
 
   Array.from(['help', 'version']).forEach((cmd) => args[cmd] === true && help(cmd))
 
-  dynamicArgs().then(() => getResource(args.resource, saveEntry, end))
+  const init = () => {
+    log.info('Load schema from %o', args.schema)
+    getResource(args.resource, saveEntry, end)
+  }
+
+  dynamicArgs().then(init)
 }
 
 main()
