@@ -12,7 +12,7 @@ const getResource = (url, onTag, onEnd) => {
     flow(entry)
       .on(`tag:${schema().root}`, onTag)
       .on('end', onEnd)
-      .on('error', (err) => log.warn(err.message))
+      .on('error', (err) => log.warn(err))
   )
 
   try {
@@ -28,9 +28,9 @@ const getResource = (url, onTag, onEnd) => {
         log.error('Content-type %s not supported.', contentType, 'Expected %s.', 'application/gzip')
 
       resp.pipe(tarStream)
-    }).on('error', (err) => log.error(err.message))
+    }).on('error', (err) => log.error(err))
   } catch (err) {
-    log.error(err.message)
+    log.error(err)
   }
 }
 

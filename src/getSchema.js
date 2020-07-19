@@ -8,7 +8,7 @@ const schema = () => {
   try {
     return require(filepath)
   } catch (err) {
-    log.error(err.message)
+    log.error(err)
   }
 }
 

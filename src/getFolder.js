@@ -10,7 +10,7 @@ const getFolder = (foldername = '') => {
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true })
     return dir
   } catch (err) {
-    log.error(err.message)
+    log.error(err)
   }
 }
 
