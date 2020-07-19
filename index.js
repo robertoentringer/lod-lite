@@ -2,4 +2,4 @@
 
 'use strict'
 
-module.exports = require('./lib/lod-lite')
+module.exports = require('./lib/lod-lite').init()
