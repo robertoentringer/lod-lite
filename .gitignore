@@ -1,3 +1,4 @@
 node_modules
 lod
+*-lod-opendata
 .vscode
