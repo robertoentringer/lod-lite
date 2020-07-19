@@ -28,7 +28,7 @@ const defaults = {
   jsarray: false,
   help: false,
   version: false,
-  schema: path.join(__dirname, 'schema.js')
+  schema: path.join(__dirname, 'schema.json')
 }
 
 const args = minimist(process.argv.slice(2), {
