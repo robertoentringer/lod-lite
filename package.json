@@ -2,15 +2,16 @@
   "name": "lod-lite",
   "version": "0.0.0-development",
   "description": "A NPM package to extract data of the Lëtzebuerger Online Dictionnaire (LOD)",
-  "main": "./src/lod-lite.js",
+  "main": "index.js",
   "bin": {
-    "lod-lite": "./src/lod-lite.js"
+    "lod-lite": "index.js"
   },
   "files": [
-    "src"
+    "index.js",
+    "lib"
   ],
   "scripts": {
-    "lint": "eslint --fix src/**/*.js",
+    "lint": "eslint --fix *.js lib/**/*.js",
     "demo": "clear && rm -fr lod && node src/lod-lite -o lod -m 40 -n lod -a -p --jsonarray lod",
     "semantic-release:config": "npx semantic-release-cli setup --gh-token=$GH_TOKEN --npm-token=$NPM_TOKEN --gh-username=$GH_USERNAME --npm-username=$NPM_USERNAME",
     "semantic-release": "semantic-release"
