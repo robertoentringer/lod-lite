@@ -50,7 +50,6 @@ const end = () => {
   saveItems(entries)
 
   log.info('Output folder : %s', path.resolve(args.output))
-  log.info('Files folder : %s', path.resolve(getFolder('files')))
   log.info('Entries extracted : %s', Object.keys(entries).length)
   log.info('Extracted files : %s', infos.files)
   log.info('Fails : %s', infos.fail.length, infos.fail.join(','))
@@ -58,16 +57,12 @@ const end = () => {
   log.exit()
 }
 
-const init = () => {
-  log.info('Schema file : %s', args.schema)
-  getResource(args.resource, saveEntry, end)
-}
-
 const main = async () => {
   process.on('SIGINT', end)
   Array.from(['help', 'version']).forEach((cmd) => args[cmd] === true && help(cmd))
   await fill()
-  init()
+  log.info('Schema file : %s', args.schema)
+  getResource(args.resource, saveEntry, end)
 }
 
 main()
