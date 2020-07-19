@@ -1,6 +1,6 @@
 # Lod-lite
 
-A NPM package to extract data of the Lëtzebuerger Online Dictionnaire (LOD).
+A NPM package to extract data of the [Lëtzebuerger Online Dictionnaire](lod.lu).
 
 Author: [Roberto Entringer](https://robertoentringer.com)<br>
 License: MIT<br>
@@ -29,58 +29,72 @@ Call script from the **terminal**:
 $ npx lod-lite
 ```
 
-## XML Schema
+## XML Schema reference
 
 Schema: https://www.lod.lu/schema/lod-opendata.xsd
 
 ## Example of schema file
 
-```js
-module.exports = {
-  target: [
-    'lod:renvoi-adj',
-    'lod:renvoi-adv',
-    'lod:renvoi-art',
-    'lod:renvoi-conj',
-    'lod:renvoi-int',
-    'lod:renvoi-part',
-    'lod:renvoi-prep',
-    'lod:renvoi-pron',
-    'lod:renvoi-subst',
-    'lod:renvoi-vrb'
-  ],
-  id: ['lod:id'],
-  lu: ['lod:item-adresse'],
-  de: [
-    'lod:trad-all-domin',
-    'lod:equiv-trad-all',
-    'lod:trad-all-subord',
-    'lod:eta-explicite',
-    'lod:rs-eta-presente'
-  ],
-  fr: [
-    'lod:trad-fr-domin',
-    'lod:equiv-trad-fr',
-    'lod:trad-fr-subord',
-    'lod:etf-explicite',
-    'lod:rs-etf-presente'
-  ],
-  pt: [
-    'lod:trad-pt-domin',
-    'lod:equiv-trad-po',
-    'lod:trad-pt-subord',
-    'lod:etp-explicite',
-    'lod:rs-etp-presente'
-  ],
-  en: [
-    'lod:trad-en-domin',
-    'lod:equiv-trad-en',
-    'lod:trad-en-subord',
-    'lod:ete-explicite',
-    'lod:rs-ete-presente'
-  ],
-  audio: ['lod:audio']
+```json
+{
+  "root": "lod:item",
+  "meta": {
+    "id": ["lod:meta", "lod:id"],
+    "version": ["lod:meta", "lod:versioun"]
+  },
+  "tags": {
+    "target": [
+      "lod:renvoi-adj",
+      "lod:renvoi-adv",
+      "lod:renvoi-art",
+      "lod:renvoi-conj",
+      "lod:renvoi-int",
+      "lod:renvoi-part",
+      "lod:renvoi-prep",
+      "lod:renvoi-pron",
+      "lod:renvoi-subst",
+      "lod:renvoi-vrb"
+    ],
+    "id": ["lod:id"],
+    "lu": ["lod:item-adresse"],
+    "de": [
+      "lod:trad-all-domin",
+      "lod:equiv-trad-all",
+      "lod:trad-all-subord",
+      "lod:eta-explicite",
+      "lod:rs-eta-presente"
+    ],
+    "fr": [
+      "lod:trad-fr-domin",
+      "lod:equiv-trad-fr",
+      "lod:trad-fr-subord",
+      "lod:etf-explicite",
+      "lod:rs-etf-presente"
+    ],
+    "pt": [
+      "lod:trad-pt-domin",
+      "lod:equiv-trad-po",
+      "lod:trad-pt-subord",
+      "lod:etp-explicite",
+      "lod:rs-etp-presente"
+    ],
+    "en": [
+      "lod:trad-en-domin",
+      "lod:equiv-trad-en",
+      "lod:trad-en-subord",
+      "lod:ete-explicite",
+      "lod:rs-ete-presente"
+    ]
+  },
+  "files": [
+    {
+      "folder": "audio",
+      "tag": ["lod:audio"],
+      "ext": "mp3"
+    }
+  ]
 }
+
 ```
 
 ## Data source
