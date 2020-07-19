@@ -11,7 +11,7 @@
   ],
   "scripts": {
     "lint": "eslint --fix src/**/*.js",
-    "demo": "clear && rm -fr lod && node src/lod-lite -o lod -m 100 -n lod -a -p --jsonarray lod",
+    "demo": "clear && rm -fr lod && node src/lod-lite -o lod -m 40 -n lod -a -p --jsonarray lod",
     "semantic-release:config": "npx semantic-release-cli setup --gh-token=$GH_TOKEN --npm-token=$NPM_TOKEN --gh-username=$GH_USERNAME --npm-username=$NPM_USERNAME",
     "semantic-release": "semantic-release"
   },
@@ -47,6 +47,7 @@
   },
   "homepage": "https://github.com/robertoentringer/lod-lite#readme",
   "dependencies": {
+    "chalk": "^4.1.0",
     "debug": "^4.1.1",
     "lod-opendata": "0.0.22",
     "minimist": "^1.2.5",

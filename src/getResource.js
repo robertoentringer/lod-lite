@@ -12,7 +12,7 @@ const getResource = (url, onTag, onEnd) => {
     flow(entry)
       .on(`tag:${schema().root}`, onTag)
       .on('end', onEnd)
-      .on('error', (err) => log.fail(err.message))
+      .on('error', (err) => log.warn(err.message))
   )
 
   try {
@@ -21,16 +21,16 @@ const getResource = (url, onTag, onEnd) => {
       const contentType = resp.headers['content-type']
       const test = !/^application\/gzip/.test(contentType)
 
-      log.info('Request from :', url)
+      log.info('Request from %s', url)
 
-      if (statusCode !== 200) log.fail('Request Failed. Status Code :', statusCode)
+      if (statusCode !== 200) log.error('Request Failed. Status Code : % ', statusCode)
       else if (test)
-        log.fail(`Content-type '${contentType}' not supported.`, "Expected 'application/gzip'.")
+        log.error('Content-type %s not supported.', contentType, 'Expected %s.', 'application/gzip')
 
       resp.pipe(tarStream)
-    }).on('error', (err) => log.fail(err.message))
+    }).on('error', (err) => log.error(err.message))
   } catch (err) {
-    log.fail(err.message)
+    log.error(err.message)
   }
 }
 

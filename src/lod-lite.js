@@ -49,17 +49,17 @@ const saveEntry = (entry) => {
 const end = () => {
   saveItems(entries)
 
-  log.info('Output folder :', path.resolve(args.output))
-  log.info('Files folder :', path.resolve(getFolder('files')))
-  log.info('Entries extracted :', Object.keys(entries).length)
-  log.info('Extracted files :', infos.files)
-  log.info('Fails :', infos.fail.length, infos.fail.join(','))
+  log.info('Output folder : %s', path.resolve(args.output))
+  log.info('Files folder : %s', path.resolve(getFolder('files')))
+  log.info('Entries extracted : %s', Object.keys(entries).length)
+  log.info('Extracted files : %s', infos.files)
+  log.info('Fails : %s', infos.fail.length, infos.fail.join(','))
 
   log.exit()
 }
 
 const init = () => {
-  log.info('Load schema from :', args.schema)
+  log.info('Schema file : %s', args.schema)
   getResource(args.resource, saveEntry, end)
 }
 

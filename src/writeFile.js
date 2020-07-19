@@ -7,7 +7,7 @@ const writeFile = (filename, data) => {
     writeFileSync(filename, data)
     return true
   } catch (err) {
-    log.error(err.message)
+    log.warn(err.message)
     return false
   }
 }
