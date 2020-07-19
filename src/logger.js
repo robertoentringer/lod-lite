@@ -17,7 +17,7 @@ module.exports.time = () => new Date(exports.hrend[0] * 1000).toISOString().subs
 
 module.exports.info = (...info) => exports.log(info, '√', 'green')
 module.exports.warn = (...info) => exports.log(info, '✘', 'yellow')
-module.exports.error = (...info) => exports.log(info, '✘', 'red') && exports.exit()
+module.exports.error = (...info) => exports.log(info, '✘', 'red') & exports.exit()
 
 module.exports.log = (info, prefix, color) =>
   console.log(
