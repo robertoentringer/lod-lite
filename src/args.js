@@ -43,9 +43,7 @@ const fill = async () => {
   if (args.resource) {
     args.name = args.name || path.basename(args.resource, path.extname(args.resource))
   } else {
-    const {
-      resources: [{ url, format }]
-    } = await opendata('resources/{url,format}')
+    const { resources: [{ url, format } = {}] = [] } = await opendata('resources/{url,format}')
     update('resource', url)
     update('name', args.name || path.basename(url, `.${format}`))
   }
