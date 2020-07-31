@@ -47,13 +47,13 @@
   },
   "homepage": "https://github.com/robertoentringer/lod-lite#readme",
   "dependencies": {
-    "lod-opendata": "0.0.22",
+    "lod-opendata": "0.1.0",
     "minimist": "^1.2.5",
     "tar": "^6.0.2",
     "xml-flow": "^1.0.4"
   },
   "devDependencies": {
-    "eslint": "^7.4.0",
+    "eslint": "^7.5.0",
     "eslint-config-prettier": "^6.11.0",
     "eslint-plugin-prettier": "^3.1.4",
     "prettier": "^2.0.5",
