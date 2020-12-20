@@ -1,6 +1,6 @@
 {
   "name": "lod-lite",
-  "version": "0.0.0-development",
+  "version": "1.0.1",
   "description": "A NPM package to extract data of the Lëtzebuerger Online Dictionnaire (LOD)",
   "main": "./src/lod-lite.js",
   "bin": {
@@ -12,8 +12,7 @@
   "scripts": {
     "lint": "eslint --fix src/**/*.js",
     "demo": "rm -fr demo && node src/lod-lite -o demo -m 15 -n lod -a -p --jsonarray lod",
-    "semantic-release:config": "npx semantic-release-cli setup --gh-token=$GH_TOKEN --npm-token=$NPM_TOKEN --gh-username=$GH_USERNAME --npm-username=$NPM_USERNAME",
-    "semantic-release": "semantic-release"
+    "prepublishOnly": "npm run lint && npm version patch && git push && git push --tags"
   },
   "repository": {
     "type": "git",
@@ -47,16 +46,15 @@
   },
   "homepage": "https://github.com/robertoentringer/lod-lite#readme",
   "dependencies": {
-    "lod-opendata": "0.1.0",
+    "lod-opendata": "0.1.1",
     "minimist": "^1.2.5",
-    "tar": "^6.0.2",
+    "tar": "^6.0.5",
     "xml-flow": "^1.0.4"
   },
   "devDependencies": {
-    "eslint": "^7.5.0",
-    "eslint-config-prettier": "^6.11.0",
-    "eslint-plugin-prettier": "^3.1.4",
-    "prettier": "^2.0.5",
-    "semantic-release": "^17.1.1"
+    "eslint": "^7.16.0",
+    "eslint-config-prettier": "^7.1.0",
+    "eslint-plugin-prettier": "^3.3.0",
+    "prettier": "^2.2.1"
   }
 }
