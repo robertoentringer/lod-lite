@@ -1,6 +1,6 @@
 {
   "name": "lod-lite",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "A NPM package to extract data of the Lëtzebuerger Online Dictionnaire (LOD)",
   "main": "./src/lod-lite.js",
   "bin": {
