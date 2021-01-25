@@ -72,16 +72,16 @@ const helper = (cmd) => {
     \r-s, --single ........ Save single files
     \r-a, --audio ......... Convert audio from base64 to mp3 file
     \r-p, --pretty ........ Pretty format output files
-    \r-r, --resource[] .... Optional URL to compressed lod file
+    \r-r, --resource=[] .... Optional URL to compressed lod file
     \r-c, --schema=[] ..... Path to schema file
     \r-n, --name=[] ....... Name of the data merged items
     \r-o, --output=[] ..... Set output folder
     \r-m, --max=[] ........ Number of items to be extracted. e.g. max=1000
 
-    \r--jsonobj[].......... Extract items to json obj. Optional pass the name file
-    \r--jsonarray[]........ Extract items to json array of objects. Optional pass the name file
-    \r--jsobj[]............ Extract items to js obj. Optional pass the name file
-    \r--jsarray[].......... Extract items to js array of objects. Optional pass the name file
+    \r--jsonobj=[].......... Extract items to json obj. Optional pass the name file
+    \r--jsonarray=[]........ Extract items to json array of objects. Optional pass the name file
+    \r--jsobj=[]............ Extract items to js obj. Optional pass the name file
+    \r--jsarray=[].......... Extract items to js array of objects. Optional pass the name file
 
     \r-h, --help ......... Output usage information
     \r--version .......... Output Lod-lite version`
