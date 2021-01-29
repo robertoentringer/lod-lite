@@ -11,7 +11,7 @@
   ],
   "scripts": {
     "lint": "eslint --fix src/**/*.js",
-    "demo": "rm -fr demo && node src/lod-lite -o demo -m 15 -n lod -a -p --jsonarray lod",
+    "demo": "rm -fr demo && node src/lod-lite -o demo -m 15 -n lod -a -q -p --jsonarray lod",
     "prepublishOnly": "npm run lint && npm version patch && git push && git push --tags"
   },
   "repository": {

@@ -20,7 +20,7 @@ const items = {}
 const args = minimist(process.argv.slice(2), {
   number: ['max'],
   string: ['output', 'schema', 'resource'],
-  boolean: ['help', 'version', 'audio', 'single', 'pretty'],
+  boolean: ['help', 'version', 'audio', 'single', 'pretty', 'quiet'],
   alias: {
     v: 'version',
     h: 'help',
@@ -31,7 +31,8 @@ const args = minimist(process.argv.slice(2), {
     m: 'max',
     o: 'output',
     n: 'name',
-    c: 'schema'
+    c: 'schema',
+    q: 'quiet'
   },
   default: {
     max: 0,
@@ -47,7 +48,8 @@ const args = minimist(process.argv.slice(2), {
     jsarray: false,
     help: false,
     version: false,
-    schema: path.join(__dirname, 'schema.js')
+    schema: path.join(__dirname, 'schema.js'),
+    quiet: false
   }
 })
 
@@ -72,7 +74,8 @@ const helper = (cmd) => {
     \r-s, --single ........ Save single files
     \r-a, --audio ......... Convert audio from base64 to mp3 file
     \r-p, --pretty ........ Pretty format output files
-    \r-r, --resource=[] .... Optional URL to compressed lod file
+    \r-q, --quiet ......... Prevent output to show progress
+    \r-r, --resource=[] ... Optional URL to compressed lod file
     \r-c, --schema=[] ..... Path to schema file
     \r-n, --name=[] ....... Name of the data merged items
     \r-o, --output=[] ..... Set output folder
@@ -192,7 +195,7 @@ const find = (obj, tags) => {
 const saveResource = (item) => {
   const id = item['lod:meta']['lod:id']
 
-  progress(id)
+  if (!args.quiet) progress(id)
 
   const obj = Object.keys(schema).reduce((obj, key) => {
     const val = find(item, schema[key])
